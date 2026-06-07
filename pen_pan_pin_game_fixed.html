@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ペン・パン・ピン ゲーム！（キッズ向け）</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: #f0f9ff;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .slide-deck {
+            position: relative;
+            width: 100%;
+            max-width: 1280px;
+            height: 720px;
+            background: #ffffff;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 60px;
+            z-index: 1;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 2;
+        }
+
+        /* ポップな丸背景 */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: #dcfd8b;
+            border-radius: 50%;
+            opacity: 0.3;
+            z-index: -1;
+        }
+        .slide::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            left: -50px;
+            width: 250px;
+            height: 250px;
+            background: #bc84ee;
+            border-radius: 50%;
+            opacity: 0.3;
+            z-index: -1;
+        }
+
+        h1 { font-size: 88px; color: #1e293b; text-align: center; line-height: 1.2; margin-bottom: 20px; }
+        .slide-title { font-size: 48px; font-weight: 700; color: #333; margin-bottom: 30px; width: 100%; text-align: left; padding-left: 20px; border-left: 10px solid #ff823a; }
+        p { font-size: 28px; color: #475569; text-align: center; }
+
+        .content-area { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; width: 100%; }
+        .tiled-content { display: flex; gap: 30px; width: 100%; justify-content: center; margin-top: 10px; margin-bottom: 10px; }
+
+        .tile {
+            flex: 1;
+            max-width: 260px;
+            background-color: #f8fafc;
+            border-radius: 30px;
+            padding: 20px;
+            text-align: center;
+            border: 4px solid #eee;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.04);
+        }
+        .tile:nth-child(1) { border-color: #ffc2d1; background-color: #fff0f3; }
+        .tile:nth-child(2) { border-color: #b3e5fc; background-color: #e1f5fe; }
+        .tile:nth-child(3) { border-color: #ccff90; background-color: #f1f8e9; }
+        .tile:nth-child(4) { border-color: #ffe082; background-color: #fff8e1; }
+
+        .emoji-illustration { font-size: 110px; height: 150px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.1)); }
+        .tile-label { font-size: 44px; font-weight: 700; color: #1e293b; background: #fff; border-radius: 15px; padding: 5px 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+
+        .section-title-layout { text-align: center; }
+        .section-title-layout h2 { font-size: 80px; color: #bc84ee; margin: 10px 0; }
+
+        .celebration-bg { background: linear-gradient(135deg, #ffe5ec 0%, #c9e4de 100%); }
+        .overlay { background: rgba(255, 255, 255, 0.9); padding: 50px 80px; border-radius: 40px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+
+        /* ナビゲーションバー */
+        .navigation-bar {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1280px;
+            padding: 0 20px;
+        }
+
+        .nav-btn {
+            background-color: #ffffff;
+            border: 2px solid #cbd5e1;
+            color: #475569;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px 28px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .nav-btn:hover {
+            border-color: #a855f7;
+            color: #a855f7;
+            transform: translateY(-2px);
+        }
+
+        .slide-counter {
+            font-size: 18px;
+            font-weight: bold;
+            color: #64748b;
+            background-color: #ffffff;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .home-btn {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #cbd5e1;
+            transition: all 0.2s;
+        }
+        .home-btn:hover {
+            background-color: #cbd5e1;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navigation-bar" style="margin-bottom: 10px; justify-content: flex-start;">
+    <a href="index.html" class="home-btn"><i class="fa-solid fa-house"></i> メニューにもどる</a>
+</div>
+
+<div class="slide-deck" id="slideDeck" onclick="handleDeckClick(event)">
+
+    <!-- スライド 1: タイトル -->
+    <div class="slide active">
+        <div class="title-layout">
+            <h1>ペン・パン・ピン<br>ゲーム！</h1>
+            <p style="font-size: 36px; color: #ff823a; margin-top: 20px;">🎉 リズムにあわせて 声に出してよんでみよう！ 🎉</p>
+        </div>
+    </div>
+
+    <!-- スライド 2: あそびかた -->
+    <div class="slide">
+        <h2 class="slide-title">あそびかた</h2>
+        <div class="content-area">
+            <ul style="list-style: none; padding: 0; width: 80%;">
+                <li style="margin-bottom: 40px; font-size: 32px; display: flex; align-items: center;"><i class="fa-solid fa-hand-clapping" style="color: #ff823a; margin-right: 15px; font-size: 40px;"></i> <div><strong>てびょうし</strong> のリズムにあわせて いこう！</div></li>
+                <li style="margin-bottom: 40px; font-size: 32px; display: flex; align-items: center;"><i class="fa-solid fa-arrow-right" style="color: #bc84ee; margin-right: 15px; font-size: 40px;"></i> <div><strong>ひだり から みぎ</strong> に じゅんばんによんでね！</div></li>
+                <li style="margin-bottom: 40px; font-size: 32px; display: flex; align-items: center;"><i class="fa-solid fa-bolt" style="color: #ffb703; margin-right: 15px; font-size: 40px;"></i> <div>だんだん スピードが はやくなるよ！</div></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- スライド 3: レベル1 タイトル -->
+    <div class="slide">
+        <div class="section-title-layout">
+            <p style="font-size: 44px; color: #64748b; font-weight: bold; margin: 0;">🟢 LEVEL 1 🟢</p>
+            <h2>ゆっくり れんしゅう</h2>
+        </div>
+    </div>
+
+    <!-- スライド 4: レベル1 - 問題1 -->
+    <div class="slide">
+        <h2 class="slide-title">じゅんばんに いってみよう！</h2>
+        <div class="content-area">
+            <div class="tiled-content">
+                <div class="tile">
+                    <div class="emoji-illustration">✒️</div>
+                    <div class="tile-label">ペン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">🍞</div>
+                    <div class="tile-label">パン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">🎳</div>
+                    <div class="tile-label">ピン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">✒️</div>
+                    <div class="tile-label">ペン</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- スライド 5: レベル1 - 問題2 -->
+    <div class="slide">
+        <h2 class="slide-title">うしろから いくよ！</h2>
+        <div class="content-area">
+            <div class="tiled-content">
+                <div class="tile">
+                    <div class="emoji-illustration">🎳</div>
+                    <div class="tile-label">ピン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">🍞</div>
+                    <div class="tile-label">パン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">✒️</div>
+                    <div class="tile-label">ペン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">🍞</div>
+                    <div class="tile-label">パン</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- スライド 6: レベル2 タイトル -->
+    <div class="slide">
+        <div class="section-title-layout">
+            <p style="font-size: 44px; color: #64748b; font-weight: bold; margin: 0;">🟡 LEVEL 2 🟡</p>
+            <h2 style="color: #ffb703;">ちょっと はやく！</h2>
+        </div>
+    </div>
+
+    <!-- スライド 7: レベル2 - 問題1 -->
+    <div class="slide">
+        <h2 class="slide-title">おなじのが つづくよ！ちゅうい！</h2>
+        <div class="content-area">
+            <div class="tiled-content">
+                <div class="tile">
+                    <div class="emoji-illustration">✒️</div>
+                    <div class="tile-label">ペン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">✒️</div>
+                    <div class="tile-label">ペン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">🍞</div>
+                    <div class="tile-label">パン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">🍞</div>
+                    <div class="tile-label">パン</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- スライド 8: レベル2 - 問題2 -->
+    <div class="slide">
+        <h2 class="slide-title">ジャンプ、ジャンプ！</h2>
+        <div class="content-area">
+            <div class="tiled-content">
+                <div class="tile">
+                    <div class="emoji-illustration">🎳</div>
+                    <div class="tile-label">ピン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">✒️</div>
+                    <div class="tile-label">ペン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">🍞</div>
+                    <div class="tile-label">パン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">🎳</div>
+                    <div class="tile-label">ピン</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- スライド 9: レベル3 タイトル -->
+    <div class="slide">
+        <div class="section-title-layout">
+            <p style="font-size: 44px; color: #64748b; font-weight: bold; margin: 0;">🔴 LEVEL 3 🔴</p>
+            <h2 style="color: #ff4757;">めちゃめちゃ はやく！</h2>
+        </div>
+    </div>
+
+    <!-- スライド 10: レベル3 - 連続チャレンジ -->
+    <div class="slide">
+        <h2 class="slide-title">さいごの ２だんコンボ！かまずにいける？</h2>
+        <div class="content-area">
+            <div class="tiled-content">
+                <div class="tile">
+                    <div class="emoji-illustration">🍞</div>
+                    <div class="tile-label">パン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">🎳</div>
+                    <div class="tile-label">ピン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">✒️</div>
+                    <div class="tile-label">ペン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">🍞</div>
+                    <div class="tile-label">パン</div>
+                </div>
+            </div>
+            <div class="tiled-content">
+                <div class="tile">
+                    <div class="emoji-illustration">🎳</div>
+                    <div class="tile-label">ピン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">✒️</div>
+                    <div class="tile-label">ペン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">🎳</div>
+                    <div class="tile-label">ピン</div>
+                </div>
+                <div class="tile">
+                    <div class="emoji-illustration">✒️</div>
+                    <div class="tile-label">ペン</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- スライド 11: クリア -->
+    <div class="slide celebration-bg">
+        <div class="overlay">
+            <h2 style="font-size: 80px; color: #1e293b; margin: 0;">👑 かんぺき！ 👑</h2>
+            <p style="font-size: 44px; color: #ff4757; font-weight: 700; margin-top: 20px;">きみは 「ペン・パン・ピン」の<br>だいパワーマスターだ！</p>
+        </div>
+    </div>
+
+    <!-- スライド 12: おしまい -->
+    <div class="slide">
+        <div style="text-align: center;">
+            <div style="font-size: 140px; margin-bottom: 20px; animation: bounce 2s infinite;">✨🧒👧✨</div>
+            <h2 style="font-size: 90px; color: #ff823a; margin-bottom: 20px;">おしまい</h2>
+            <p style="font-size: 32px;">いっぱい わらって たのしかったね！またあそぼう！</p>
+        </div>
+    </div>
+
+</div>
+
+<div class="navigation-bar">
+    <button class="nav-btn" onclick="prevSlide()"><i class="fa-solid fa-arrow-left"></i> まえへ</button>
+    <div class="slide-counter" id="slideCounter">1 / 1</div>
+    <button class="nav-btn" onclick="nextSlide()">つぎへ <i class="fa-solid fa-arrow-right"></i></button>
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    let currentIdx = 0;
+
+    function updateSlide() {
+        slides.forEach((slide, idx) => {
+            if (idx === currentIdx) {
+                slide.classList.add('active');
+            } else {
+                slide.classList.remove('active');
+            }
+        });
+        document.getElementById('slideCounter').innerText = `${currentIdx + 1} / ${slides.length}`;
+    }
+
+    function nextSlide() {
+        if (currentIdx < slides.length - 1) {
+            currentIdx++;
+            updateSlide();
+        }
+    }
+
+    function prevSlide() {
+        if (currentIdx > 0) {
+            currentIdx--;
+            updateSlide();
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'Space' || e.key === ' ') {
+            nextSlide();
+        } else if (e.key === 'ArrowLeft') {
+            prevSlide();
+        }
+    });
+
+    function handleDeckClick(e) {
+        const rect = document.getElementById('slideDeck').getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const width = rect.width;
+        
+        if (clickX < width * 0.3) {
+            prevSlide();
+        } else {
+            nextSlide();
+        }
+    }
+
+    updateSlide();
+</script>
+
+</body>
+</html>

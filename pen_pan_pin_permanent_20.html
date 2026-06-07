@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ペン・パン・ピン 20連発！</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: #f1f5f9;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* スライド全体のコンテナ */
+        .slide-deck {
+            position: relative;
+            width: 100%;
+            max-width: 1280px;
+            height: 720px;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        /* スライド要素の基本デザイン（非表示で重ねる） */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 80px;
+            z-index: 1;
+        }
+
+        /* アクティブなスライドだけ表示 */
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 2;
+        }
+
+        /* 装飾的な背景ボケ円 */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+            z-index: -1;
+        }
+        .slide::after {
+            content: '';
+            position: absolute;
+            bottom: -10%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(251, 146, 60, 0.08) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        /* タイポグラフィ */
+        h1 { font-size: 72px; color: #1e293b; line-height: 1.2; margin-bottom: 20px; text-align: center; }
+        .slide-title { font-size: 38px; color: #475569; margin-bottom: 30px; text-align: left; width: 100%; border-left: 12px solid #3b82f6; padding-left: 20px; font-weight: bold; }
+        p { font-size: 26px; color: #64748b; margin: 0; text-align: center; }
+        .level-badge { color: white; padding: 10px 40px; border-radius: 50px; font-weight: bold; font-size: 32px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        /* ゲームタイル レイアウト */
+        .content-area { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; width: 100%; }
+        .tile-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; width: 100%; }
+        
+        .game-tile {
+            border: 4px solid #e2e8f0;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.03);
+            background: #fff;
+        }
+        .game-tile.pen { border-color: #3b82f6; background-color: #eff6ff; }
+        .game-tile.pan { border-color: #fb923c; background-color: #fff7ed; }
+        .game-tile.pin { border-color: #4ade80; background-color: #f0fdf4; }
+
+        .emoji-box { font-size: 96px; height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; filter: drop-shadow(0px 6px 6px rgba(0,0,0,0.08)); }
+        .label { font-size: 42px; font-weight: bold; color: #1e293b; background: white; padding: 4px 20px; border-radius: 16px; width: 90%; text-align: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+
+        /* 2段レイアウト（高難易度用） */
+        .tile-grid-double { grid-template-rows: 1fr 1fr; gap: 15px; }
+        .tile-grid-double .game-tile { padding: 10px; border-width: 3px; }
+        .tile-grid-double .emoji-box { font-size: 64px; height: 80px; margin-bottom: 5px; }
+        .tile-grid-double .label { font-size: 28px; padding: 2px 10px; border-radius: 10px; }
+
+        /* セクションタイトルスライド用 */
+        .section-title-layout { text-align: center; }
+        .section-title-layout h2 { font-size: 72px; margin: 20px 0; font-weight: bold; }
+        .section-title-layout hr { border: 0; height: 6px; width: 150px; margin: 30px auto; border-radius: 3px; }
+
+        /* お祝い */
+        .big-celebration-emoji { font-size: 150px; margin-bottom: 20px; animation: pulse 1.5s infinite alternate; }
+        @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+
+        /* 下部ナビゲーションコントローラー */
+        .navigation-bar {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1280px;
+            padding: 0 20px;
+        }
+
+        .nav-btn {
+            background-color: #ffffff;
+            border: 2px solid #e2e8f0;
+            color: #475569;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px 28px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+        }
+
+        .nav-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.1);
+        }
+
+        .nav-btn:active {
+            transform: translateY(0);
+        }
+
+        .slide-counter {
+            font-size: 18px;
+            font-weight: bold;
+            color: #64748b;
+            background-color: #ffffff;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* ホームへ戻るボタン */
+        .home-btn {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #cbd5e1;
+            transition: all 0.2s;
+        }
+        .home-btn:hover {
+            background-color: #cbd5e1;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navigation-bar no-print" style="margin-bottom: 10px; justify-content: flex-start;">
+    <a href="index.html" class="home-btn"><i class="fa-solid fa-house"></i> メニューにもどる</a>
+</div>
+
+<!-- スライドデック本体 -->
+<div class="slide-deck" id="slideDeck" onclick="handleDeckClick(event)">
+    
+    <!-- スライド 1: 表紙 -->
+    <div class="slide active">
+        <div class="section-title-layout">
+            <p style="font-size: 32px; color: #3b82f6; font-weight: bold;">✨ 子ども向け テンポ音読ゲーム ✨</p>
+            <h1 style="color: #1e293b;">ペン・パン・ピン<br>20連発チャレンジ！</h1>
+            <hr style="background: #3b82f6;">
+            <p>リズムに あわせて、まちがえずに よめるかな？</p>
+        </div>
+    </div>
+
+    <!-- スライド 2: あそびかた -->
+    <div class="slide">
+        <h2 class="slide-title">あそびかた</h2>
+        <div class="content-area">
+            <div class="tile-grid">
+                <div class="game-tile pen">
+                    <div class="emoji-box">✒️</div>
+                    <div class="label">ペン</div>
+                </div>
+                <div class="game-tile pan">
+                    <div class="emoji-box">🍞</div>
+                    <div class="label">パン</div>
+                </div>
+                <div class="game-tile pin">
+                    <div class="emoji-box">🎳</div>
+                    <div class="label">ピン</div>
+                </div>
+                <div class="game-tile" style="border-style: dashed; opacity: 0.6; background: #f8fafc;">
+                    <div class="emoji-box">❓</div>
+                    <div class="label">よんでね</div>
+                </div>
+            </div>
+            <p style="margin-top: 40px; text-align: center; font-weight: bold; color: #334155; font-size: 28px;">
+                👏 てびょうしの リズムで、「ひだり」から「みぎ」へ よんでね！
+            </p>
+        </div>
+    </div>
+
+    <!-- LEVEL 1 導入 -->
+    <div class="slide">
+        <div class="section-title-layout">
+            <div class="level-badge" style="background: #3b82f6;">LEVEL 1</div>
+            <h2 style="color: #3b82f6;">ペンが いっぱい（ときどきパン）</h2>
+            <hr style="background: #3b82f6;">
+            <p>まずは 「ペン」のリズムに なれよう！</p>
+        </div>
+    </div>
+
+    <!-- パターン 1-5 -->
+    <div class="slide"><h2 class="slide-title">パターン 1</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 2</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 3</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 4</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 5</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+    </div></div></div>
+
+    <!-- LEVEL 2 導入 -->
+    <div class="slide">
+        <div class="section-title-layout">
+            <div class="level-badge" style="background: #fb923c;">LEVEL 2</div>
+            <h2 style="color: #fb923c;">パンが いっぱい（ときどきペン）</h2>
+            <hr style="background: #fb923c;">
+            <p>こんどは 「パン」が メインだよ！あわてないでね</p>
+        </div>
+    </div>
+
+    <!-- パターン 6-10 -->
+    <div class="slide"><h2 class="slide-title">パターン 6</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 7</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 8</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 9</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 10</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+    </div></div></div>
+
+    <!-- LEVEL 3 導入 -->
+    <div class="slide">
+        <div class="section-title-layout">
+            <div class="level-badge" style="background: #4ade80;">LEVEL 3</div>
+            <h2 style="color: #4ade80;">ピンが ついに とうじょう！</h2>
+            <hr style="background: #4ade80;">
+            <p>「ペン」「パン」「ピン」の ３つが まざるぞ！</p>
+        </div>
+    </div>
+
+    <!-- パターン 11-15 -->
+    <div class="slide"><h2 class="slide-title">パターン 11</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 12</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 13</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 14</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 15</h2><div class="content-area"><div class="tile-grid">
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+    </div></div></div>
+
+    <!-- LEVEL 4 導入 -->
+    <div class="slide">
+        <div class="section-title-layout">
+            <div class="level-badge" style="background: #ef4444;">ULTIMATE</div>
+            <h2 style="color: #ef4444;">ノンストップ！２だん チャレンジ</h2>
+            <hr style="background: #ef4444;">
+            <p>さいごは ８こ れんぞく！スピードアップして いこう！</p>
+        </div>
+    </div>
+
+    <!-- パターン 16-20 (ここから2段レイアウト) -->
+    <div class="slide"><h2 class="slide-title">パターン 16</h2><div class="content-area"><div class="tile-grid tile-grid-double">
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 17</h2><div class="content-area"><div class="tile-grid tile-grid-double">
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 18</h2><div class="content-area"><div class="tile-grid tile-grid-double">
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 19</h2><div class="content-area"><div class="tile-grid tile-grid-double">
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+    </div></div></div>
+
+    <div class="slide"><h2 class="slide-title">パターン 20 (ラスト！)</h2><div class="content-area"><div class="tile-grid tile-grid-double">
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pin"><div class="emoji-box">🎳</div><div class="label">ピン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+        <div class="game-tile pan"><div class="emoji-box">🍞</div><div class="label">パン</div></div>
+        <div class="game-tile pen"><div class="emoji-box">✒️</div><div class="label">ペン</div></div>
+    </div></div></div>
+
+    <!-- お祝い / エンド -->
+    <div class="slide">
+        <div class="section-title-layout congrats-layout">
+            <div class="big-celebration-emoji">👑</div>
+            <h2>すごすぎる！かんぺき！</h2>
+            <p style="font-size: 32px; color: #fb923c; font-weight: bold;">20パターン ぜんぶクリア！</p>
+            <p style="margin-top: 20px;">きみは さいきょうの「ペン・パン・ピン」マスターだ！</p>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="section-title-layout">
+            <h1>おしまい</h1>
+            <p style="font-size: 32px;">たくさん わらって たのしかったね！また あそぼう！</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- ナビゲーションボタン -->
+<div class="navigation-bar">
+    <button class="nav-btn" onclick="prevSlide()"><i class="fa-solid fa-arrow-left"></i> まえへ</button>
+    <div class="slide-counter" id="slideCounter">1 / 1</div>
+    <button class="nav-btn" onclick="nextSlide()">つぎへ <i class="fa-solid fa-arrow-right"></i></button>
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    let currentIdx = 0;
+
+    function updateSlide() {
+        slides.forEach((slide, idx) => {
+            if (idx === currentIdx) {
+                slide.classList.add('active');
+            } else {
+                slide.classList.remove('active');
+            }
+        });
+        document.getElementById('slideCounter').innerText = `${currentIdx + 1} / ${slides.length}`;
+    }
+
+    function nextSlide() {
+        if (currentIdx < slides.length - 1) {
+            currentIdx++;
+            updateSlide();
+        }
+    }
+
+    function prevSlide() {
+        if (currentIdx > 0) {
+            currentIdx--;
+            updateSlide();
+        }
+    }
+
+    // キーボード操作対応
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'Space' || e.key === ' ') {
+            nextSlide();
+        } else if (e.key === 'ArrowLeft') {
+            prevSlide();
+        }
+    });
+
+    // 画面クリック（左右端タップ）でのスライドめくり
+    function handleDeckClick(e) {
+        const rect = document.getElementById('slideDeck').getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const width = rect.width;
+        
+        // 画面の左30%をクリックしたら戻る、それ以外は進む
+        if (clickX < width * 0.3) {
+            prevSlide();
+        } else {
+            nextSlide();
+        }
+    }
+
+    // 初期化
+    updateSlide();
+</script>
+
+</body>
+</html>

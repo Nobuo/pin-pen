@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ペン・パン・ピン 印刷用シート（A4対応）</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #f1f5f9;
+        }
+
+        /* 印刷時の用紙にフィットさせる設定（A4横ベース） */
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+
+        /* 印刷専用CSS */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            /* A4横 1ページに1パターン大きく印刷する用のページサイズ制御 */
+            .print-page-single {
+                width: 297mm;
+                height: 209mm;
+                page-break-after: always;
+                break-after: page;
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 15mm !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+            }
+
+            /* 1ページに4つ（ミニカード）印刷する用 */
+            .print-page-grid {
+                width: 297mm;
+                height: 209mm;
+                page-break-after: always;
+                break-after: page;
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 10mm !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-rows: repeat(2, 1fr) !important;
+                gap: 5mm !important;
+            }
+        }
+
+        /* 通常ブラウザ表示（プレビュー）用のスタイル */
+        .preview-single {
+            width: 297mm;
+            height: 210mm;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            margin: 20px auto;
+            padding: 15mm;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            page-break-after: always;
+            break-after: page;
+            position: relative;
+        }
+
+        .preview-grid-container {
+            width: 297mm;
+            height: 210mm;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            margin: 20px auto;
+            padding: 10mm;
+            border-radius: 12px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 5mm;
+            page-break-after: always;
+            break-after: page;
+        }
+
+        .card-item {
+            border: 2px dashed #94a3b8;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body class="p-0 m-0">
+
+    <!-- 画面上部：コントロール用ツールバー（印刷時は自動で非表示になります） -->
+    <div class="no-print bg-slate-800 text-white p-6 shadow-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-print text-emerald-400"></i>
+                    ペン・パン・ピン 印刷用シート（全20パターン）
+                </h1>
+                <p class="text-sm text-slate-300 mt-1">印刷設定をして、ブラウザの印刷機能（Ctrl + P）から印刷してください。</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- メニューにもどるボタン -->
+                <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-slate-200 hover:text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all border border-slate-600">
+                    <i class="fa-solid fa-house"></i> メニューにもどる
+                </a>
+
+                <!-- モード切り替えボタン -->
+                <div class="bg-slate-700 p-1 rounded-lg flex gap-1">
+                    <button id="btnSingle" onclick="setMode('single')" class="px-4 py-2 rounded-md font-bold text-sm transition-all bg-emerald-500 text-white shadow">
+                        <i class="fa-solid fa-file-powerpoint mr-1"></i> A4大判シート (紙芝居用)
+                    </button>
+                    <button id="btnGrid" onclick="setMode('grid')" class="px-4 py-2 rounded-md font-bold text-sm text-slate-300 hover:text-white transition-all">
+                        <i class="fa-solid fa-grip mr-1"></i> A4ミニカード (切り取り用)
+                    </button>
+                </div>
+
+                <!-- 印刷実行ボタン -->
+                <button onclick="window.print()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-2.5 rounded-lg flex items-center gap-2 shadow-lg transition-all transform hover:scale-105">
+                    <i class="fa-solid fa-print"></i> いますぐ印刷する
+                </button>
+            </div>
+        </div>
+
+        <!-- 印刷のコツアドバイス -->
+        <div class="max-w-6xl mx-auto mt-4 bg-slate-700/50 rounded-xl p-4 flex gap-4 text-xs text-slate-200 border border-slate-600/50">
+            <div class="font-bold text-amber-400 flex items-center gap-1 shrink-0"><i class="fa-solid fa-lightbulb"></i> 印刷時のコツ:</div>
+            <ul class="list-disc list-inside space-y-1">
+                <li>プリンタの印刷設定画面で、送信先を「PDFに保存」にするとPDF化して持ち出すこともできます。</li>
+                <li>用紙の向きは必ず <strong>「横向き (Landscape)」</strong> に設定してください。</li>
+                <li>余白設定は <strong>「なし」</strong> または <strong>「最小」</strong> にすると、余計な白い余白を省いてピッタリ用紙サイズに印刷されます。</li>
+                <li>カードの背景色（ブルー、オレンジ、グリーン）を綺麗に出したい場合は、印刷詳細設定の <strong>「背景のグラフィック」</strong> にチェックを入れてください。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- プレビュー・印刷コンテンツエリア -->
+    <div id="printArea" class="py-4">
+        <!-- JavaScriptで全20パターンをここに動的レンダリングします -->
+    </div>
+
+    <script>
+        // 全20パターンのデータ定義
+        const levelData = [
+            { level: 1, title: "レベル1: ペンだらけ(1)", items: ["pen", "pen", "pen", "pen", "pen", "pen", "pen", "pan"] },
+            { level: 1, title: "レベル1: ペンだらけ(2)", items: ["pen", "pen", "pen", "pan", "pen", "pen", "pen", "pen"] },
+            { level: 1, title: "レベル1: ペンだらけ(3)", items: ["pen", "pan", "pen", "pen", "pen", "pan", "pen", "pen"] },
+            { level: 1, title: "レベル1: ペンだらけ(4)", items: ["pen", "pen", "pan", "pen", "pan", "pen", "pen", "pan"] },
+            { level: 1, title: "レベル1: ペンだらけ(5)", items: ["pan", "pen", "pen", "pen", "pen", "pan", "pen", "pen"] },
+            
+            { level: 2, title: "レベル2: パンだらけ(1)", items: ["pan", "pan", "pan", "pan", "pan", "pan", "pan", "pen"] },
+            { level: 2, title: "レベル2: パンだらけ(2)", items: ["pan", "pan", "pen", "pan", "pan", "pan", "pan", "pan"] },
+            { level: 2, title: "レベル2: パンだらけ(3)", items: ["pan", "pen", "pan", "pan", "pan", "pen", "pan", "pan"] },
+            { level: 2, title: "レベル2: パンだらけ(4)", items: ["pan", "pan", "pen", "pan", "pen", "pan", "pan", "pen"] },
+            { level: 2, title: "レベル2: パンだらけ(5)", items: ["pen", "pan", "pan", "pan", "pan", "pen", "pan", "pan"] },
+            
+            { level: 3, title: "レベル3: ピンが仲間入り(1)", items: ["pen", "pen", "pan", "pin", "pen", "pen", "pan", "pin"] },
+            { level: 3, title: "レベル3: ピンが仲間入り(2)", items: ["pin", "pin", "pen", "pan", "pin", "pin", "pen", "pan"] },
+            { level: 3, title: "レベル3: ピンが仲間入り(3)", items: ["pen", "pan", "pin", "pen", "pan", "pin", "pen", "pan"] },
+            { level: 3, title: "レベル3: ピンが仲間入り(4)", items: ["pin", "pen", "pan", "pin", "pen", "pan", "pin", "pan"] },
+            { level: 3, title: "レベル3: ピンが仲間入り(5)", items: ["pen", "pen", "pan", "pan", "pin", "pin", "pen", "pin"] },
+            
+            { level: 4, title: "レベル4: 激ムズミックス(1)", items: ["pen", "pan", "pin", "pen", "pan", "pin", "pen", "pan"] },
+            { level: 4, title: "レベル4: 激ムズミックス(2)", items: ["pin", "pen", "pan", "pin", "pen", "pan", "pin", "pen"] },
+            { level: 4, title: "レベル4: 激ムズミックス(3)", items: ["pin", "pin", "pen", "pen", "pan", "pan", "pin", "pen"] },
+            { level: 4, title: "レベル4: 激ムズミックス(4)", items: ["pen", "pan", "pin", "pen", "pan", "pin", "pen", "pin"] },
+            { level: 4, title: "レベル4: 激ムズミックス(5)", items: ["pin", "pan", "pen", "pin", "pin", "pen", "pan", "pen"] }
+        ];
+
+        const itemMeta = {
+            pen: { emoji: "✒️", label: "ペン", border: "border-blue-400", bg: "bg-blue-50" },
+            pan: { emoji: "🍞", label: "パン", border: "border-orange-400", bg: "bg-orange-50" },
+            pin: { emoji: "🎳", label: "ピン", border: "border-emerald-400", bg: "bg-emerald-50" }
+        };
+
+        let currentMode = "single";
+
+        // 1枚に大きく1つのパターンをレンダリング（紙芝居用）
+        function renderSingleMode() {
+            const container = document.getElementById("printArea");
+            container.innerHTML = "";
+
+            levelData.forEach((pat, index) => {
+                const page = document.createElement("div");
+                page.className = "print-page-single preview-single border border-slate-200";
+
+                // ヘッダー部
+                const header = document.createElement("div");
+                header.className = "flex justify-between items-center border-b-2 border-slate-300 pb-2 mb-4";
+                
+                let badgeColor = "bg-blue-500";
+                if (pat.level === 2) badgeColor = "bg-orange-500";
+                if (pat.level === 3) badgeColor = "bg-emerald-500";
+                if (pat.level === 4) badgeColor = "bg-rose-500";
+
+                header.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="${badgeColor} text-white px-4 py-1.5 rounded-full text-lg font-bold">LEVEL ${pat.level}</span>
+                        <span class="text-2xl font-bold text-slate-700">${pat.title}</span>
+                    </div>
+                    <div class="text-xl font-bold text-slate-400">パターン ${index + 1} / 20</div>
+                `;
+                page.appendChild(header);
+
+                // コンテンツ部（グリッド）
+                const grid = document.createElement("div");
+                grid.className = "grid grid-cols-4 grid-rows-2 gap-4 flex-grow my-4";
+
+                pat.items.forEach(itemKey => {
+                    const meta = itemMeta[itemKey];
+                    const tile = document.createElement("div");
+                    tile.className = `border-4 ${meta.border} ${meta.bg} rounded-3xl flex flex-col justify-center items-center p-3 shadow-sm`;
+                    tile.innerHTML = `
+                        <div class="text-[75px] leading-none mb-2 filter drop-shadow-md">${meta.emoji}</div>
+                        <div class="text-3xl font-bold text-slate-800 bg-white border border-slate-200 px-6 py-1 rounded-xl w-4/5 text-center shadow-inner">${meta.label}</div>
+                    `;
+                    grid.appendChild(tile);
+                });
+                page.appendChild(grid);
+
+                // フッター部
+                const footer = document.createElement("div");
+                footer.className = "text-center text-sm text-slate-400 pt-2 border-t border-slate-200 mt-2 flex justify-between items-center";
+                footer.innerHTML = `
+                    <span>てびょうしに合わせて声に出そう！「ペン・パン・ピン ゲーム」</span>
+                    <span class="font-bold">© 2026 pin-pen Project</span>
+                `;
+                page.appendChild(footer);
+
+                container.appendChild(page);
+            });
+        }
+
+        // 1枚に4パターンまとめてレンダリング（ミニカード切り取り用）
+        function renderGridMode() {
+            const container = document.getElementById("printArea");
+            container.innerHTML = "";
+
+            // 4個単位で分割してページを生成
+            for (let i = 0; i < levelData.length; i += 4) {
+                const page = document.createElement("div");
+                page.className = "print-page-grid preview-grid-container border border-slate-200";
+
+                for (let j = 0; j < 4; j++) {
+                    const index = i + j;
+                    if (index >= levelData.length) break;
+
+                    const pat = levelData[index];
+                    const card = document.createElement("div");
+                    card.className = "card-item relative";
+
+                    let badgeColor = "bg-blue-500";
+                    if (pat.level === 2) badgeColor = "bg-orange-500";
+                    if (pat.level === 3) badgeColor = "bg-emerald-500";
+                    if (pat.level === 4) badgeColor = "bg-rose-500";
+
+                    // ミニカード用のインナークラス
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center border-b border-slate-300 pb-1 mb-2">
+                            <div class="flex items-center gap-1.5">
+                                <span class="${badgeColor} text-white px-2 py-0.5 rounded-full text-xs font-bold">L-${pat.level}</span>
+                                <span class="text-xs font-bold text-slate-600">${pat.title}</span>
+                            </div>
+                            <span class="text-xs font-bold text-slate-400">P-${index + 1}</span>
+                        </div>
+                        <div class="grid grid-cols-4 grid-rows-2 gap-1.5 flex-grow mb-1.5">
+                            ${pat.items.map(itemKey => {
+                                const meta = itemMeta[itemKey];
+                                return `
+                                    <div class="border-2 ${meta.border} ${meta.bg} rounded-xl flex flex-col justify-center items-center p-1.5">
+                                        <div class="text-3xl leading-none mb-1">${meta.emoji}</div>
+                                        <div class="text-[11px] font-bold text-slate-800 bg-white border border-slate-100 px-1 py-0.5 rounded-md w-full text-center shadow-sm">${meta.label}</div>
+                                    </div>
+                                `;
+                            }).join("")}
+                        </div>
+                        <div class="text-[9px] text-slate-400 text-center border-t border-slate-200 pt-1">
+                            ペン・パン・ピン カード教材
+                        </div>
+                    `;
+                    page.appendChild(card);
+                }
+                container.appendChild(page);
+            }
+        }
+
+        // モード変更の切り替え制御
+        function setMode(mode) {
+            currentMode = mode;
+            const btnSingle = document.getElementById("btnSingle");
+            const btnGrid = document.getElementById("btnGrid");
+
+            if (mode === "single") {
+                btnSingle.className = "px-4 py-2 rounded-md font-bold text-sm transition-all bg-emerald-500 text-white shadow";
+                btnGrid.className = "px-4 py-2 rounded-md font-bold text-sm text-slate-300 hover:text-white transition-all";
+                renderSingleMode();
+            } else {
+                btnGrid.className = "px-4 py-2 rounded-md font-bold text-sm transition-all bg-emerald-500 text-white shadow";
+                btnSingle.className = "px-4 py-2 rounded-md font-bold text-sm text-slate-300 hover:text-white transition-all";
+                renderGridMode();
+            }
+        }
+
+        // 初期ロード時
+        window.onload = function() {
+            setMode("single");
+        };
+    </script>
+</body>
+</html>
